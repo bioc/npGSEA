@@ -1,0 +1,189 @@
+runNormApprox <- function(xg, y, wg, set){
+    ThatGw <- .calcThatGw (xg, y, wg)
+    varThatGw <- .calcVarThatGw (xg, y, wg)
+    stats <- .calcPvaluesNorm (ThatGw, varThatGw)
+    return( new("npGSEAResultNorm", 
+        geneSetName = setName(set),
+        zStat = as.numeric(ThatGw/sqrt(varThatGw)),
+        ThatGw = as.numeric(ThatGw),
+        varThatGw = as.numeric(varThatGw), 
+        pLeft = as.numeric(stats$pLeft), 
+        pRight = as.numeric(stats$pRight), 
+        pTwoSided = as.numeric(stats$pTwoSided), 
+        xSet = xg) )
+}
+
+##test stat for gene set in experiment (norm approx):
+.calcThatGw <- function(xg, y, wg) {
+    nobs <- length(y)
+    ###a vector containing each Betahat_g
+    betahat_g <- (xg %*% y)/nobs  
+    ##sum of all the Betahat_g's wtd by  their corresponding weights
+    ThatGw <- wg %*% betahat_g 
+    return(ThatGw)
+}
+
+##calculates variance of permuted ThatGw (norm approx)
+## based on eq 5, section 3.3 in Larson and Owen 2014
+.calcVarThatGw <- function(xg, y, wg) {
+    nobs <- length(y)
+    XGi <- wg %*% xg 
+    XbarGG <- mean(XGi^2)
+    mu2 <- mean(y^2)  ##section 3.1
+    VarThatGw  <- (mu2/(nobs-1))*XbarGG
+    return(VarThatGw)
+}
+
+
+##calculates p-values for our appoximation (norm)
+.calcPvaluesNorm <- function(ThatGw, varThatGw){
+    Tscaled <- ThatGw/sqrt(varThatGw)
+    pL <- pnorm(Tscaled)
+    pR <- pnorm(-Tscaled)
+    pC <- 2*min(pL, pR)
+    return(list(pLeft=pL, pRight=pR, pTwoSided=pC))
+}
+
+### calc Beta dist'n based stats
+runBetaApprox <- function(xg, y, wg, set){
+    stats <- .calcBetaDistStats(xg, y, wg)
+    return(new("npGSEAResultBeta",
+        geneSetName = setName(set),
+        betaStat=as.numeric(stats$betaStat),
+        ThatGw = as.numeric(stats$ThatGw),
+        varThatGw = as.numeric(stats$varThatGw), 
+        alpha= as.numeric(stats$alpha), 
+        beta=as.numeric(stats$beta), 
+        pLeft=as.numeric(stats$pLeft), 
+        pRight=as.numeric(stats$pRight), 
+        pTwoSided=as.numeric(stats$pTwoSided), 
+        xSet=xg) )
+}
+
+.calcBetaDistStats <- function(xg, y, wg){
+    #first we get That and its variance
+    ThatGw <- .calcThatGw(xg, y, wg)
+    varThatGw <- .calcVarThatGw(xg, y, wg)
+
+    ##next we calculate A and B, see section 3.3
+    nobs <- length(y)
+    XGi <- wg %*% xg 
+    sortedXGi <- sort(XGi)
+    sortedY <- sort(y)
+    sortedYdecreasing <- sort(y, decreasing=TRUE)
+    A <- (sortedXGi%*%sortedYdecreasing)/nobs 
+    B <- (sortedXGi%*%sortedY)/nobs
+
+    ##next we calculate A and B, see eq. 3
+    alpha <- (A/(B-A))*(A*B/varThatGw+1)
+    beta <- (-B/(B-A))*(A*B/varThatGw+1)
+    stat <- (ThatGw-A)/(B-A)
+    pL <- pbeta(stat, alpha, beta)
+    pR <- pbeta(stat, alpha, beta, lower.tail=FALSE)
+    pC <- 2*min(pL, pR)
+    return(list(betaStat=stat, ThatGw=ThatGw, 
+                varThatGw=varThatGw,
+                alpha=alpha, beta=beta, A=A, B=B,  
+                pLeft=pL, pRight=pR, pTwoSided=pC ))
+}
+
+
+##test stat for gene set in experiment (chisq approx):
+runChisqApprox <- function(xg, y, wg, set){
+    if( length(y) < 4 ){
+        stop("Number of samples is too small 
+        for permutation approximation; 
+        you need at least 4 samples for the 
+        chiSq approximation analysis")
+    }
+    #Get set statistic
+    ChatGw <- .calcChatGw(xg, y, wg)
+    # Get moment approximation to permutation distribution
+    chiSqMoments <- .calcChiSqMoments(xg, y, wg)   
+    df <- as.numeric(2*chiSqMoments$mu^2/chiSqMoments$var)
+    sigsq <- as.numeric(chiSqMoments$mu/df)
+    pQ <- as.numeric(1 - pchisq(ChatGw/sigsq, df) )
+    return(new("npGSEAResultChiSq",
+        geneSetName = setName(set),
+        chiSqStat = ChatGw/sigsq,
+        ChatGw = ChatGw,
+        sigmaSq = sigsq, 
+        DF=df, 
+        pTwoSided = pQ, 
+        xSet = xg) )
+}
+
+# sum of squared dot products, genes x response y with wts
+.calcChatGw <- function(xg, y, wg) {
+    nobs <- length(y)
+    betahat_g <- (xg%*%y)/nobs
+    C_Gw <- wg %*%(betahat_g)^2
+    return(as.numeric(C_Gw))
+}
+
+# Return permutation based moments (chisq approx)
+##section 3.1, eq4 of paper
+.calcChiSqMoments <- function(xg, y, wg){
+    x <- t(xg)
+    nobs <- length(y)  ##num of obs
+    G = ncol(x)  ##number of genes in G
+
+    ##get A and B matrices
+    A <- .getA(nobs)
+    B <- .getB()
+    AtB = t(A) %*% B  ###2x2 matrix of constants
+
+    ## Precompute X moments
+    xgh = xgghh = matrix(NA,G,G)
+    for( g in 1:G ){
+        for( h in 1:g ){
+            xgh[g,h]   = xgh[h,g]   = mean( x[,g] * x[,h] )
+            xgghh[g,h] = xgghh[h,g] = mean( x[,g]^2 * x[,h]^2 )
+        }
+    }
+
+    ## Precompute Y moments
+    ymoments <- matrix( 0,2,1 )
+    mu2 <- mean(y^2)
+    ymoments[1,1] <- mu2^2  
+    ymoments[2,1] <- mean(y^4)  #mu4
+
+    ##Calculate mean square (lemma 1)
+    meansquare <- rep(0,G)
+    for( g in 1:G ){
+        meansquare[g] <- mu2 * xgh[g,g]/(nobs-1)
+    }
+
+    ##Calculate cov square (lemma 2, collary 2)
+    covsquare <- matrix(0,G,G)
+    xmoments <- matrix( 0,2,1 )
+    for( g in 1:G ){
+        for( h in 1:g ){
+            xmoments[1,1]  <- (xgh[g,g]*xgh[h,h]+2*xgh[g,h]^2)/nobs^2
+            xmoments[2,1]  <- xgghh[g,h]/nobs^3
+            covsquare[g,h] = covsquare[h,g] = 
+                t(ymoments) %*% AtB %*% xmoments - 
+                ymoments[1,1] * xgh[g,g] * xgh[h,h] /(nobs-1)^2
+        }
+    }
+  
+    ##Calculate E(C_tildeGw) and var(C_tildeGw) (eq 4, section 3.1)
+    mu <- wg%*% meansquare 
+    var <- (wg%*% covsquare)%*%wg
+    return( list(mu=mu, var = var) )
+}
+
+## Calculate matrix A from Lemma 2, section 3.1
+.getA <- function(n){
+    A = matrix(0, 5, 2)
+    A[,1] = c( 0, 0, n/(n-1),-n/((n-1)*(n-2)), 3*n/((n-1)*(n-2)*(n-3)) )
+    A[,2] = c(1,-1/(n-1),-1/(n-1),2/((n-1)*(n-2)),-6/((n-1)*(n-2)*(n-3)))
+    return(A)
+}
+## Calculate matrix B from Lemma 2, section 3.1
+.getB <- function(){
+    B <- matrix(0, 5, 2)
+    B[,1] <- c(0, 0, 1, -2, 1)
+    B[,2] <- c(1, -4, -3, 12, 6)
+    return(B)
+}

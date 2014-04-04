@@ -1,0 +1,24 @@
+importClassesFrom(methods, character, list, matrix, numeric)
+
+importMethodsFrom(Biobase, exprs)
+importMethodsFrom(BiocGenerics, lapply, mapply, match, ncol, rownames,
+    sort, unlist)
+importMethodsFrom(methods, show)
+
+importFrom(graphics, abline, plot)
+importFrom(methods, is, new)
+importFrom(stats, dbeta, dchisq, dnorm, lm, pbeta, pchisq, pnorm,
+    resid)
+
+import(GSEABase)
+
+export(getIncidence)
+export(npGSEA)
+
+exportClasses(npGSEAResultNorm, npGSEAResultNormCollection,
+    npGSEAResultBeta, npGSEAResultBetaCollection,
+    npGSEAResultChiSq, npGSEAResultChiSqCollection)
+
+exportMethods(geneSetName, stat, sigmaSq, pTwoSided, pLeft, 
+    pRight, xSet, npGSEAPlot, zStat, betaStat, alphaValue, 
+    betaValue, chiSqStat, DF, show)

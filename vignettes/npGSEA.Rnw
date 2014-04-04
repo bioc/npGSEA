@@ -1,0 +1,475 @@
+%\VignetteIndexEntry{Running gene set enrichment analysis with the "npGSEA" package}
+%\VignettePackage{npGSEA}
+\documentclass[12pt]{article}
+
+
+<<style, eval=TRUE, echo=FALSE, results=tex>>=
+BiocStyle::latex()
+@
+
+
+\usepackage{cite}
+\usepackage{Sweave}
+\SweaveOpts{keep.source=TRUE,eps=FALSE,pdf=FALSE,png=TRUE,include=FALSE,width=4,height=4.5,resolution=150}
+\setkeys{Gin}{width=0.5\textwidth}
+
+% use a vertical rule for R output instead of prompts for R input
+\usepackage{fancyvrb}
+\definecolor{darkgray}{gray}{0.2}
+\DefineVerbatimEnvironment{Sinput}{Verbatim}{xleftmargin=1em,formatcom={\color{darkgray}}}
+\DefineVerbatimEnvironment{Soutput}{Verbatim}{xleftmargin=1em,frame=leftline,framerule=.6pt,rulecolor=\color{darkgray},framesep=1em,formatcom={\color{darkgray}}}
+\fvset{listparameters={\setlength{\topsep}{0pt}}}
+\renewenvironment{Schunk}{\vspace{\topsep}}{\vspace{\topsep}}
+
+
+
+\author{Jessica L. Larson$^{1*}$ and Art Owen$^{2}$ \\[1em] 
+    \small{$^{1}$ Department of Bioinformatics and Computational Biology, Genentech, Inc.} \\ 
+    \small{$^{2}$ Department of Statistics, Stanford University} \\ 
+    \small{\texttt{$^*$larson.jessica (at) gene.com}}}
+
+\title{Moment based gene set enrichment testing -- the npGSEA package}
+
+\date{\today}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+\newpage
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Introduction }
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Gene set methods are critical to the analysis of gene expression data. 
+The \verb@npGSEA@ package provides methods to run 
+permutation-based gene set enrichment analyses without 
+the typically computationally expensive permutation cost.  These 
+methods allow users to adjust for covariates and approximate 
+corresponding permutation distributions.  We are currently evaluating 
+the applicability and accuracy of our method for RNA-seq expression data.
+
+Our methods
+find the exact relevant moments of a weighted sum of (squared)
+test statistics under permutation, taking into account correlations
+among the test statistics.  We find moment-based gene set enrichment 
+$p$-values that closely approximate the permutation method $p$-values.
+
+This vignette describes a typical analysis workflow and includes some information 
+about the statistical theory behind \verb@npGSEA@.  For more technical 
+details, please see Larson and Owen, 2014 \nocite{larson:2014}.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Example workflow for GSEA}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Preparing our gene sets and our dataset for analysis}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+For our example, we will use the \verb@ALL@ dataset.  We begin by loading 
+relevant libraries, subsetting the data,
+and running \verb@featureFilter@ on this data set.  
+For details on these methods, please see the \verb@limma@ manual.  
+
+<<loadLibrariesAndData>>=
+library(ALL)
+library(hgu95av2.db)
+library(genefilter)
+library(limma)
+library(GSEABase)
+library(npGSEA)
+
+data(ALL)
+
+ALL <- ALL[, ALL$mol.biol %in% c('NEG','BCR/ABL') &
+     !is.na(ALL$sex)]
+ALL$mol.biol <- factor(ALL$mol.biol, 
+     levels = c('NEG', 'BCR/ABL'))
+ALL <- featureFilter(ALL)
+@
+
+We adjust the feature names of the \verb@ALL@ dataset so that they match the 
+names of our gene sets below.  
+We convert them to entrez ids.  
+<<adjustNames>>=
+featureNames(ALL) <- select(hgu95av2.db, featureNames(ALL), 
+                            "ENTREZID", "PROBEID")$ENTREZID
+@
+
+We now make four arbitrary gene sets by randomly selecting 
+from the genes in our universe.
+<<MakeSets>>=
+xData <- exprs(ALL)
+geneEids <- rownames(xData)
+set.seed(12345)
+set1 <- GeneSet(geneIds=sample(geneEids,15, replace=FALSE), 
+             setName="set1", 
+             shortDescription="This is set1")
+set2 <- GeneSet(geneIds=sample(geneEids,50, replace=FALSE), 
+             setName="set2",  
+             shortDescription="This is set2")
+set3 <- GeneSet(geneIds=sample(geneEids,100, replace=FALSE), 
+             setName="set3",  
+             shortDescription="This is set3")
+set4 <- GeneSet(geneIds=sample(geneEids,500, replace=FALSE), 
+            setName="set4",  
+            shortDescription="This is set4")
+@
+
+As a positive control, we also make three gene sets that include our 
+top differentially expressed genes.
+<<RunLimma2NewSets>>=
+model <- model.matrix(~mol.biol, ALL)
+fit  <-  eBayes(lmFit(ALL, model))
+tt <- topTable(fit, coef=2, n=200)
+ttUp <- tt[which(tt$logFC >0), ]
+ttDown <- tt[which(tt$logFC <0), ]
+
+set5 <- GeneSet(geneIds=rownames(ttUp)[1:20], 
+        setName="set5",  
+        shortDescription="This is a true set of the top 20 DE 
+        genes with a positive fold change")
+set6 <- GeneSet(geneIds=rownames(ttDown)[1:20], 
+        setName="set6",  
+        shortDescription="This is a true set of the top 20 DE genes 
+        with a negative fold change")
+set7 <- GeneSet(geneIds=c(rownames(ttUp)[1:10], rownames(ttDown)[1:10]), 
+        setName="set7",  
+        shortDescription="This is a true set of the top 10 DE genes 
+        with a positive and a negative fold change")
+@
+
+We then collapse all of our gene sets into a \verb@GeneSetCollection@.  
+For more information on
+\verb@GeneSets@ and \verb@GeneSetCollections@, 
+see the \verb@GSEABase@ manual.
+
+<<GSC>>=
+gsc <- GeneSetCollection( c(set1, set2, set3, set4, set5, set6, set7) )
+gsc
+@
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Running npGSEA}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Now that we have both our gene sets and experiment, we are ready to 
+run \verb@npGSEA@ and 
+determine the level of 
+enrichment in our experiment.  We can use \verb@npGSEA@ with 
+our \verb@eset@ or 
+expression data (\verb@xData@) directly.  
+We call  \verb@npGSEASummary@ to get a summary of the results. 
+\verb@T_Gw@ is explained in more detail
+in Section 3.2.   
+
+<<runIt>>=
+yFactor <- ALL$mol.biol
+res1 <- npGSEA(x = ALL, y = yFactor, set = set1)  ##with the eset
+res1
+
+res2_exprs <- npGSEA(xData, ALL$mol.biol, gsc[[2]])  ##with the expression data
+res2_exprs 
+@
+
+\verb@npGSEA@ has several built in accessor functions to gather more 
+information about the analysis of your set of interest 
+in your experiment.  
+<<accessorFunctions>>=
+res3 <- npGSEA(ALL, yFactor, set3)  
+res3
+geneSetName(res3)
+stat(res3)
+sigmaSq(res3)
+zStat(res3)
+pTwoSided(res3)
+pLeft(res3)
+dim(xSet(res3))
+@
+
+There is also a \verb@npGSEA@ specific plot function (\verb@npGSEAPlot@) to 
+visualize the results of your analysis.  Highlighted in red on the plot is 
+the corresponding \verb@zStat@ of our analysis.
+<<plot3, fig = TRUE>>=
+npGSEAPlot(res3)
+@
+
+\begin{figure}
+\centering
+\includegraphics{npGSEA-plot3}
+\caption{
+  \textbf{Set3 normal approximation results}  
+  This plot displays the standard normal curve and our observed
+  zStat for set3 in this analysis.
+ }
+\end{figure}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Running npGSEA with the beta and chi-sq approximations}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+There are three types of approximation methods in \verb@npGSEA@: 
+"norm", "beta", and "chiSq".
+Each method is discussed in brief in Section 3.  The "norm" 
+approximation method is the default. 
+
+<<runItNorm, fig = TRUE>>=
+res5_norm <- npGSEA(ALL, yFactor, set5, approx= "norm")  
+res5_norm
+npGSEAPlot(res5_norm)
+@
+
+
+
+The beta approximation yields results quite similar to the normal approximation.  
+<<runItBeta, fig = TRUE>>=
+res5_beta <- npGSEA(ALL, yFactor, set5, approx= "beta")
+res5_beta
+npGSEAPlot(res5_beta)
+@
+
+The chi-sq approximation method is only available for the two-sided test.  
+Here we call \verb@npGSEA@ and 
+then show how the \verb@chiSqStat@ is related to \verb@C_Gw@.  
+\verb@C_Gw@ is explained in more detail
+in Section 3.2.   
+
+<<runItChiSq, fig = TRUE>>=
+res5_chiSq <- npGSEA(ALL, yFactor, set5, approx= "chiSq")  
+res5_chiSq
+chiSqStat(res5_chiSq)
+stat(res5_chiSq)
+stat(res5_chiSq)/sigmaSq(res5_chiSq)
+npGSEAPlot(res5_chiSq)
+@
+
+Note that, as we expected, \verb@set5@ is a significantly enriched 
+in all three methods.  In each of the three 
+corresponding plots, the observed statistic is a very rare event.
+
+\begin{figure}
+\centering
+\includegraphics[width=.3\textwidth]{npGSEA-runItNorm}
+\includegraphics[width=.3\textwidth]{npGSEA-runItBeta}
+\includegraphics[width=.3\textwidth]{npGSEA-runItChiSq}
+\caption{
+  \textbf{Set5 normal, beta, and chi-sq approximation results}  
+  These plots displays the reference normal, beta, and chi-sq curves, 
+  and our observed
+ zStat, betaStat, and chiSqStat for set5 in this analysis.
+ }
+\end{figure}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Adding weights to the model}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Sometimes we do not want to weigh each gene in our set equally.  
+We want to assign a larger 
+weight to genes that are of 
+a particular interest, and a lower weight to genes that we know may 
+behave poorly.  In this example, we
+up-weight the genes in \verb@set7@ that had a positive fold change, 
+and down-weight those with a 
+negative fold change.  We assign the first 10 genes in our set a weight 
+of 2, and the second 10 a weight of 0.5.
+
+<<runItChiSq>>=
+w <- c( rep(2, 10), rep (0.5, 10) )
+res7_nowts <- npGSEA(x = ALL, y= yFactor, set = set7)  
+res7_nowts
+res7_wts <- npGSEA(x = ALL, y = yFactor, set = set7,  w = w)  
+res7_wts
+@
+
+By adding these weights, we get a slightly more significant result.  
+We can add weights for the beta and 
+chi-sq approximations, too.  By default, \verb@npGSEA@ assigns 
+a weight of 1 for all genes.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Adding covariates to model}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Often we want to correct for confounders in our model.  In this 
+example, we correct for the age and sex of the subjects in our experiment. 
+For more details on model selection and its relation to inference, 
+please see the \verb@limma@ manual.  
+
+<<addCovariates>>=
+res3_age <- npGSEA(x = ALL, y = yFactor, set = set3, z = ALL$age) 
+res3_age
+
+res3_agesex <- npGSEA(x = ALL, y = yFactor, set = set3, z = cbind(ALL$age, ALL$sex)) 
+res3_agesex
+@
+
+By adjusting for these variables, we get a slight different result than above.  Note that we can adjust for 
+covariates in the beta and chi-sq approximation methods, too.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Running npGSEA with multiple gene sets}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+To explore multiple gene sets, we let \verb@set@ be a 
+\verb@GeneSetCollection@.  This returns a list of 
+\verb@npGSEAResultNorm@ objects, called a 
+\verb@npGSEAResultNormCollection@.  We can access 
+statistics for each \verb@GeneSet@ in our analysis through 
+accessors of \verb@npGSEAResultNormCollection@.  
+
+<<runMultiplenpGSEA>>=
+resgsc_norm <- npGSEA(x = ALL, y = yFactor, set = gsc)  
+unlist( pLeft(resgsc_norm) )
+unlist( stat (resgsc_norm) )
+unlist( zStat (resgsc_norm) )
+@
+
+Note how quick our method is.  We get results as accurate as 
+permutation methods in a fraction of the time, even for multiple gene sets.  
+
+Using the \verb@ReportingTools@ package, we can publish 
+these results to a HTML page for exploration.  We first adjust for multiple testing.
+<<publishMultiplenpGSEA, eval=FALSE >>=
+pvals <- p.adjust( unlist(pTwoSided(resgsc_norm)), method= "BH" )
+library(ReportingTools)
+npgseaReport <- HTMLReport (shortName = "npGSEA",
+        title = "npGSEA Results", reportDirectory = "./reports")
+publish(gsc, npgseaReport, annotation.db = "org.Hs.eg",
+        setStats = unlist(zStat (resgsc_norm)), setPValues = pvals)
+finish(npgseaReport)
+@
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Methods in brief}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Disadvantages to a permutation approach}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+There are three main disadvantages to permutation-based analyses: cost,
+randomness, and granularity.
+
+Testing many sets of genes 
+becomes computationally expensive for two reasons.  
+First, there are many test statistics to calculate
+in each permuted version of the data. 
+Second, to allow for multiplicity adjustment, we
+require small nominal $p$-values to draw inference about our sets, 
+which in turn requires a large number
+of permutations.
+
+Permutations are also subject random inference.  
+Because permutations are based on a random shuffling of the data,
+there is a chance that we will obtain a different $p$-value 
+for our set of interest each 
+time we run our permutation analysis.  
+
+Permutations also have a granularity problem.
+If we do $M$ permutations, then the smallest possible
+$p$-value we can attain is $1/(M+1)$.  When it is necessary
+to adjust for multiplicity, the permutation approach becomes 
+very computationally expensive.  
+Another aspect of the granularity problem is that permutations
+give us no basis to distinguish between two gene sets that
+both have the same $p$-value $1/(M+1)$. There may be many such gene sets,
+and they have meaningfully different effect sizes.  
+
+Because of each of these limitations of permutation testing, there is a 
+need to move beyond
+permutation-based GSEA methods.  The methods we present in 
+\verb@npGSEA@ and discuss 
+in brief below are not as computationally 
+expensive, random, or granular than their permutation counterparts.  
+More details on our method can 
+be found in Larson and Owen (2014).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Test statistics}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+We present our notation using the language of gene expression
+experiments.
+  
+Let $g$ and $h$ denote individual genes
+and $G$ be a set of genes.  Our experiment has $n$ subjects.
+The subjects may represent patients, cell cultures, or tissue samples.  
+The expression level for gene $g$ in subject $i$ 
+is $X_{gi}$, and $Y_{i}$ is the target variable on subject $i$. 
+$Y_{i}$ is often a treatment, disease, or genotype.  We center the variables so that
+$\sum_{i=1}^nY_{i} = \sum_{i=1}^n X_{gi} = 0, \forall g$.
+
+Our measure of association for gene $g$ on our treatment of interest is
+$$\hat\beta_{g} = \frac1{n}\sum_{i=1}^nX_{gi}Y_{i}.$$
+
+We consider the linear statistic
+$$ T_{G,w}  = \sum_{g\in G}w_{g}\hat\beta_{g}$$
+and the quadratic statistic 
+$$C_{G,w} = \sum_{g\in G}w_{g}\hat\beta_{g}^2,$$ 
+where $w_{g}$
+corresponds to the weight given to gene $g$ in set $G$. 
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Moment based reference distributions}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+To avoid the issues discussed above, we approximate the distribution of
+the permuted test statistics $T_{G,w}$ by Gaussian
+or by rescaled beta distributions.
+For the quadratic statistic $C_{G,w}$ we use
+a distribution of the form $\sigma^2\chi^2_{(\nu)}$.
+
+For the Gaussian treatment of $T_{G,w}$ we
+calculate $\sigma^2 = Var(T_{G,w})$ under permutation,
+and then report the $p$-value
+$$
+p = Pr( N( 0, \sigma^2 ) \le T_{G,w}).
+$$
+The above is a left tail $p$-value. Two-sided and right tailed $p$-values are 
+analogous.  
+
+When we want something sharper than the normal distribution, we can
+use a scaled Beta distribution, of the form 
+$A + (B-A)Beta(\alpha,\beta)$. 
+The $Beta(\alpha,\beta)$ distribution has 
+a continuous density function
+on $0<x<1$ for $\alpha,\beta>0$.
+We choose $A$, $B$, $\alpha$ and $\beta$ by matching the upper
+and lower limits of $T_{G,w}$ under permutation, as well as its mean and variance.  
+The observed left tailed $p$-value is
+$$
+p = Pr\Bigl( Beta(\alpha,\beta) \le \frac{T_{G,w}-A}{B-A}\Bigr).
+$$
+
+For the quadratic test statistic $C_{G,w}$
+we use a $\sigma^2\chi^2_{(\nu)}$ reference distribution
+reporting the $p$-value
+$$\Pr( \sigma^2\chi^2_{(\nu)}\ge C_{G,w}),$$
+after matching the first and second moments of $\sigma^2\chi^2_{(\nu)}$
+to $E(C_{G,w})$ and $E( C_{G,w}^2)$ under permutation, respectively.
+
+
+Additional details on how $\sigma^2$, $A$, $B$, $\alpha$, $\beta$, $E(C_{G,w})$, $E( C_{G,w}^2)$, and 
+$\nu$ 
+are derived can be found in Larson and Owen (2014).
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Session Info}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+<<sessInfo, results=tex, echo=FALSE>>=
+toLatex(sessionInfo())
+@
+
+<<resetOptions, echo=FALSE>>=
+options(prompt="> ", continue="+ ")
+@ 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{References}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Larson and Owen.  (2014).  Moment based gene set tests.  Submitted.
+
+
+\end{document}

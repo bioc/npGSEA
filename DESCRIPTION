@@ -1,0 +1,32 @@
+Package: npGSEA
+Type: Package
+Title: Permutation approximation methods for gene set enrichment
+        analysis (non-permutation GSEA)
+Version: 0.99.1
+Date: 2014-03-27
+Author: Jessica Larson and Art Owen
+Maintainer: Jessica Larson <larson.jessica@gene.com>
+Imports: Biobase, methods, BiocGenerics, graphics, stats
+Suggests: ALL, genefilter, limma, hgu95av2.db, ReportingTools,
+        BiocStyle
+Depends: GSEABase (>= 1.24.0)
+Description: Current gene set enrichment methods rely upon permutations
+        for inference.  These approaches are computationally expensive
+        and have minimum achievable p-values based on the number of
+        permutations, not on the actual observed statistics.  We have
+        derived three parametric approximations to the permutation
+        distributions of two gene set enrichment test statistics.  We
+        are able to reduce the computational burden and granularity
+        issues of permutation testing with our method, which is
+        implemented in this package. npGSEA calculates gene set
+        enrichment statistics and p-values without the computational
+        cost of permutations.  It is applicable in settings where one
+        or many gene sets are of interest.  There are also built-in
+        plotting functions to help users visualize results.
+License: Artistic-2.0
+biocViews: GeneSetEnrichment, Microarray, StatisticalMethod, Pathways
+Collate: 'getIncidence.R' 'miscFunctions.R' 'miscDataPrepFunctions.R'
+        'npGSEA.R' 'AllClasses.R' 'AllGenerics.R'
+        'npGSEAResultBeta-accessors.R' 'npGSEAResultChiSq-accessors.R'
+        'npGSEAResultNorm-accessors.R' 'npGSEAPlot-methods.R'
+        'show-methods.R'
