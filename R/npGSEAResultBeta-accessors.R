@@ -6,10 +6,10 @@ setMethod("geneSetName", "npGSEAResultBetaCollection",
 )
 
 setMethod("stat", "npGSEAResultBeta", 
-    function(object){object@betaStat}
+    function(object){object@ThatGw}
 )
 setMethod("stat", "npGSEAResultBetaCollection", 
-    function(object){lapply(object, function(y) y@betaStat)}
+    function(object){lapply(object, function(y) y@ThatGw)}
 )
 
 setMethod("sigmaSq", "npGSEAResultBeta", 
