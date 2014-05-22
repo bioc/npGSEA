@@ -7,7 +7,8 @@ setClass("npGSEAResultNorm",
     pLeft="numeric",
     pRight="numeric",
     pTwoSided="numeric",
-    xSet = "matrix")
+    xSet = "matrix",
+    betaHats = "matrix")
 )
 
 setClass("npGSEAResultNormCollection",
@@ -35,7 +36,8 @@ setClass("npGSEAResultBeta",
     pLeft="numeric",
     pRight="numeric",
     pTwoSided="numeric",
-    xSet="matrix")
+    xSet="matrix",
+    betaHats = "matrix")
 )
 
 setClass("npGSEAResultBetaCollection",
@@ -60,7 +62,8 @@ setClass("npGSEAResultChiSq",
     sigmaSq="numeric",
     DF="numeric",
     pTwoSided="numeric",
-    xSet="matrix")
+    xSet="matrix",
+    betaHats = "matrix")
 )
 
 setClass("npGSEAResultChiSqCollection",

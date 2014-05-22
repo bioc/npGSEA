@@ -1,10 +1,18 @@
-CHANGES IN VERSION 1.1.1
+CHANGES IN VERSION 1.1.2 (May 22 2014)
 ------------------------
 
-    o Fixed a typo in stat accessor for Beta approximation (April 22 2014)
+    o Added x-axis labels to plots
+    o Changed 'z' to 'covars' in the npGSEA function
+    o Added a new function 'pValues' which returns all appropriate p-values for a given npGSEAResult object
+    o Added a new function slot to the npGSEAResult objects, betaHats.  This vector contains the betaHats for each gene in the gene set.  Users can thus now see each gene's individual contribution to the test statistics.
 
-CHANGES IN VERSION 0.99.0
+CHANGES IN VERSION 1.1.1 (April 22 2014)
 ------------------------
 
-    o Package submitted to Bioconductor (March 31 2014)
+    o Fixed a typo in stat accessor for Beta approximation 
+
+CHANGES IN VERSION 0.99.0 (March 31 2014)
+------------------------
+
+    o Package submitted to Bioconductor 
 

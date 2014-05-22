@@ -19,6 +19,6 @@ exportClasses(npGSEAResultNorm, npGSEAResultNormCollection,
     npGSEAResultBeta, npGSEAResultBetaCollection,
     npGSEAResultChiSq, npGSEAResultChiSqCollection)
 
-exportMethods(geneSetName, stat, sigmaSq, pTwoSided, pLeft, 
+exportMethods(geneSetName, stat, sigmaSq, pValues, pTwoSided, pLeft, 
     pRight, xSet, npGSEAPlot, zStat, betaStat, alphaValue, 
-    betaValue, chiSqStat, DF, show)
+    betaValue, chiSqStat, DF, show, betaHats)

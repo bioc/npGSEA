@@ -33,6 +33,13 @@ setMethod("xSet", "npGSEAResultChiSqCollection",
     function(object){lapply(object, function(y) y@xSet)}
 )
 
+setMethod("betaHats", "npGSEAResultChiSq", 
+    function(object){object@betaHats}
+)
+setMethod("betaHats", "npGSEAResultChiSqCollection", 
+    function(object){lapply(object, function(y) y@betaHats)}
+)
+
 setMethod("chiSqStat", "npGSEAResultChiSq", 
     function(object){object@chiSqStat}
 )

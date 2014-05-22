@@ -4,14 +4,14 @@
 ##' @title Runs the non-permutation GSEA 
 ##' @param x A matrix of expression data or an object of type ExpressionSet.  The columns of x represent samples in a given experiment.  The rows are genes.  The names of each row (or featureNames of the eSet) must be of the same type (e.g., entrez ids) as the ids of the gene set.
 ##' @param y A vector containing the treatment for each sample. The length of y must be more than 4 for the "chisq" approximation.
-##' @param z A vector or matrix containing covariate(s) of interest, optional
+##' @param covars A vector or matrix containing covariate(s) of interest, optional
 ##' @param set A GeneSet object containing a set of genes of interest or a GeneSetCollection object containing a collection of GeneSets
 ##' @param approx A string of either "norm" (default), "beta" or "chiSq".  If "norm", the normal approximation to the non-permutation GSEA is calculated and returned.  If "beta", the beta approximation is reported.  If "chiSq", the Chi-squared approximation to the permutation GSEA is calculated.
 ##' @param w A vector or list containing the weights of each gene in the set or sets, optional.  If w is a list, the number of elements in the list must correspond to the number of gene sets in the collection. 
 ##' @return an object with the corresponding GSEA results.  If approx="norm" an npGSEAResultNorm object is returned.  If approx="beta" a npGSEAResultBeta object is returned.  If approx="chiSq" a npGSEAResultChiSq object is returned.  If set is a GeneSetCollection (i.e., multiple sets of interest), then the corresponding npGSEAResultNormCollection, npGSEAResultBetaCollection, or npGSEAResultChiSqCollection is returned.
 ##' @author Jessica L. Larson and Art Owen
 ##' @export
-npGSEA <- function(x, y, set, z = NULL, approx = c("norm", "beta", "chiSq"), w = NULL){
+npGSEA <- function(x, y, set, covars = NULL, approx = c("norm", "beta", "chiSq"), w = NULL){
     approx <- match.arg(approx, c("norm", "beta", "chiSq"), several.ok = FALSE)    
     if(is(x)[1]== "ExpressionSet") { x <- exprs(x) }
     if(dim(x) [2] != length(y) )
@@ -21,7 +21,7 @@ npGSEA <- function(x, y, set, z = NULL, approx = c("norm", "beta", "chiSq"), w =
     y <- .adjustY(y)
       
     ######collection of sets:
-    if (is(set)[1] == "GeneSetCollection"){
+    if (is(set, "GeneSetCollection") == TRUE ){
         if( (is.null(w) == FALSE) && ( is.list(w)== FALSE ) ){
             stop("You must provide weights for each gene set in 
             your collection as a list. 
@@ -40,7 +40,7 @@ npGSEA <- function(x, y, set, z = NULL, approx = c("norm", "beta", "chiSq"), w =
         if (approx=="norm"){
             res <- mapply(function(singleSet, singleW){
             ##prep data
-            xyz <- .prepXYZ(x, y,  z, singleSet)
+            xyz <- .prepXYZ(x, y,  covars, singleSet)
             xg <- xyz$xg
             y <- xyz$y
             wg <- .prepW(singleW, singleSet,  xyz$inset)
@@ -52,7 +52,7 @@ npGSEA <- function(x, y, set, z = NULL, approx = c("norm", "beta", "chiSq"), w =
         ##beta approx
         if (approx=="beta"){              
             res <- mapply(function(singleSet, singleW){
-            xyz <- .prepXYZ(x, y,  z, singleSet)
+            xyz <- .prepXYZ(x, y,  covars, singleSet)
             xg <- xyz$xg
             y <- xyz$y
             wg <- .prepW(singleW, singleSet,  xyz$inset)
@@ -63,20 +63,20 @@ npGSEA <- function(x, y, set, z = NULL, approx = c("norm", "beta", "chiSq"), w =
         ##chisq approx
         if (approx=="chiSq"){
             res <- mapply(function(singleSet, singleW){
-            xyz <- .prepXYZ(x, y,  z, singleSet)
+            xyz <- .prepXYZ(x, y, covars, singleSet)
             xg <- xyz$xg
             y <- xyz$y
             wg <- .prepW(singleW, singleSet, xyz$inset)
-            runChisqApprox(xg, y, wg, singleSet)            
+            runChisqApprox(xg, y, wg, singleSet) 
             }, set, w )
             output <- new("npGSEAResultChiSqCollection", res)
         }
     }  	
 
     #########single gene sets:
-    else if (is(set)[1] == "GeneSet"){
+    else if (is(set, "GeneSet") ==TRUE ) {
         ##prep data
-        xyz <- .prepXYZ(x, y,  z, set)
+        xyz <- .prepXYZ(x, y,  covars, set)
         xg <- xyz$xg
         y <- xyz$y
         wg <- .prepW(w, set, xyz$inset)

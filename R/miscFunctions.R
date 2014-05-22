@@ -1,5 +1,6 @@
 runNormApprox <- function(xg, y, wg, set){
-    ThatGw <- .calcThatGw (xg, y, wg)
+    betahatG <- .calcBetaHatG (xg, y)
+    ThatGw <- .calcThatGw (betahatG, wg)
     varThatGw <- .calcVarThatGw (xg, y, wg)
     stats <- .calcPvaluesNorm (ThatGw, varThatGw)
     return( new("npGSEAResultNorm", 
@@ -10,14 +11,19 @@ runNormApprox <- function(xg, y, wg, set){
         pLeft = as.numeric(stats$pLeft), 
         pRight = as.numeric(stats$pRight), 
         pTwoSided = as.numeric(stats$pTwoSided), 
-        xSet = xg) )
+        xSet = xg,
+        betaHats = betahatG) )
+}
+
+.calcBetaHatG <- function(xg, y){
+	nobs <- length(y)
+    ###a vector containing each Betahat_g
+   	betahat_g <- (xg %*% y)/nobs  
+   	return(betahat_g)
 }
 
 ##test stat for gene set in experiment (norm approx):
-.calcThatGw <- function(xg, y, wg) {
-    nobs <- length(y)
-    ###a vector containing each Betahat_g
-    betahat_g <- (xg %*% y)/nobs  
+.calcThatGw <- function(betahat_g, wg) {
     ##sum of all the Betahat_g's wtd by  their corresponding weights
     ThatGw <- wg %*% betahat_g 
     return(ThatGw)
@@ -45,24 +51,11 @@ runNormApprox <- function(xg, y, wg, set){
 }
 
 ### calc Beta dist'n based stats
-runBetaApprox <- function(xg, y, wg, set){
-    stats <- .calcBetaDistStats(xg, y, wg)
-    return(new("npGSEAResultBeta",
-        geneSetName = setName(set),
-        betaStat=as.numeric(stats$betaStat),
-        ThatGw = as.numeric(stats$ThatGw),
-        varThatGw = as.numeric(stats$varThatGw), 
-        alpha= as.numeric(stats$alpha), 
-        beta=as.numeric(stats$beta), 
-        pLeft=as.numeric(stats$pLeft), 
-        pRight=as.numeric(stats$pRight), 
-        pTwoSided=as.numeric(stats$pTwoSided), 
-        xSet=xg) )
-}
-
-.calcBetaDistStats <- function(xg, y, wg){
-    #first we get That and its variance
-    ThatGw <- .calcThatGw(xg, y, wg)
+##uses many of the same functions as norm approx
+runBetaApprox <- function(xg, y, wg, set){    
+    #first we get betahats, That and its variance
+    betahatG <- .calcBetaHatG (xg, y)
+    ThatGw <- .calcThatGw (betahatG, wg)
     varThatGw <- .calcVarThatGw(xg, y, wg)
 
     ##next we calculate A and B, see section 3.3
@@ -74,18 +67,35 @@ runBetaApprox <- function(xg, y, wg, set){
     A <- (sortedXGi%*%sortedYdecreasing)/nobs 
     B <- (sortedXGi%*%sortedY)/nobs
 
-    ##next we calculate A and B, see eq. 3
+    ##next we calculate alpha and beta and our betaStat, see eq. 3
     alpha <- (A/(B-A))*(A*B/varThatGw+1)
     beta <- (-B/(B-A))*(A*B/varThatGw+1)
-    stat <- (ThatGw-A)/(B-A)
-    pL <- pbeta(stat, alpha, beta)
-    pR <- pbeta(stat, alpha, beta, lower.tail=FALSE)
-    pC <- 2*min(pL, pR)
-    return(list(betaStat=stat, ThatGw=ThatGw, 
-                varThatGw=varThatGw,
-                alpha=alpha, beta=beta, A=A, B=B,  
-                pLeft=pL, pRight=pR, pTwoSided=pC ))
+    betaStat <- (ThatGw-A)/(B-A)
+    pvals <- .calcPvaluesBeta (betaStat, alpha, beta)
+    
+    return(new("npGSEAResultBeta",
+        geneSetName = setName(set),
+        betaStat = as.numeric(betaStat),
+        ThatGw = as.numeric(ThatGw),
+        varThatGw = as.numeric(varThatGw), 
+        alpha = as.numeric(alpha), 
+        beta = as.numeric(beta), 
+        pLeft = as.numeric(pvals$pLeft), 
+        pRight = as.numeric(pvals$pRight), 
+        pTwoSided = as.numeric(pvals$pTwoSided), 
+        xSet = xg,
+        betaHats = betahatG)  )
 }
+
+##calculates p-values for our appoximation (beta)
+.calcPvaluesBeta <- function(betaStat, alpha, beta){
+	pL <- pbeta(betaStat, alpha, beta)
+    pR <- pbeta(betaStat, alpha, beta, lower.tail=FALSE)
+    pC <- 2*min(pL, pR)
+    return(list(pLeft=pL, pRight=pR, pTwoSided=pC))
+}
+
+
 
 
 ##test stat for gene set in experiment (chisq approx):
@@ -96,8 +106,9 @@ runChisqApprox <- function(xg, y, wg, set){
         you need at least 4 samples for the 
         chiSq approximation analysis")
     }
-    #Get set statistic
-    ChatGw <- .calcChatGw(xg, y, wg)
+    #Get set statistics
+    betahatG <- .calcBetaHatG (xg, y)
+    ChatGw <- .calcChatGw(betahatG, wg)
     # Get moment approximation to permutation distribution
     chiSqMoments <- .calcChiSqMoments(xg, y, wg)   
     df <- as.numeric(2*chiSqMoments$mu^2/chiSqMoments$var)
@@ -108,15 +119,14 @@ runChisqApprox <- function(xg, y, wg, set){
         chiSqStat = ChatGw/sigsq,
         ChatGw = ChatGw,
         sigmaSq = sigsq, 
-        DF=df, 
+        DF= df, 
         pTwoSided = pQ, 
-        xSet = xg) )
+        xSet = xg,
+        betaHats = betahatG) )
 }
 
 # sum of squared dot products, genes x response y with wts
-.calcChatGw <- function(xg, y, wg) {
-    nobs <- length(y)
-    betahat_g <- (xg%*%y)/nobs
+.calcChatGw <- function(betahat_g, wg) {
     C_Gw <- wg %*%(betahat_g)^2
     return(as.numeric(C_Gw))
 }

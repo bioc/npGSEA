@@ -5,6 +5,8 @@ setGeneric("stat", function(object) standardGeneric("stat"))
 
 setGeneric("sigmaSq", function(object) standardGeneric("sigmaSq"))
 
+setGeneric("pValues", function(object) standardGeneric("pValues"))
+
 setGeneric("pTwoSided", function(object) standardGeneric("pTwoSided"))
 
 setGeneric("pLeft", function(object) standardGeneric("pLeft"))
@@ -12,6 +14,8 @@ setGeneric("pLeft", function(object) standardGeneric("pLeft"))
 setGeneric("pRight", function(object) standardGeneric("pRight"))
 
 setGeneric("xSet", function(object) standardGeneric("xSet"))
+
+setGeneric("betaHats", function(object) standardGeneric("betaHats"))
 
 setGeneric("npGSEAPlot", function(object) 
                     standardGeneric("npGSEAPlot"))

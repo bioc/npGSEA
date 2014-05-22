@@ -2,8 +2,8 @@ Package: npGSEA
 Type: Package
 Title: Permutation approximation methods for gene set enrichment
         analysis (non-permutation GSEA)
-Version: 1.1.1
-Date: 2014-04-22
+Version: 1.1.2
+Date: 2014-05-22
 Author: Jessica Larson and Art Owen
 Maintainer: Jessica Larson <larson.jessica@gene.com>
 Imports: Biobase, methods, BiocGenerics, graphics, stats
@@ -29,4 +29,5 @@ Collate: 'getIncidence.R' 'miscFunctions.R' 'miscDataPrepFunctions.R'
         'npGSEA.R' 'AllClasses.R' 'AllGenerics.R'
         'npGSEAResultBeta-accessors.R' 'npGSEAResultChiSq-accessors.R'
         'npGSEAResultNorm-accessors.R' 'npGSEAPlot-methods.R'
-        'show-methods.R'
+        'show-methods.R' 'pValues-methods.R'
+Packaged: 2014-05-22 16:54:09 UTC; larsonj5

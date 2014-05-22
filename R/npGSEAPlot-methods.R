@@ -6,7 +6,7 @@ setMethod("npGSEAPlot", "npGSEAResultNorm",
         if(obsZStat <= -4) {xrange <- c( (obsZStat-1), -(obsZStat-1) ) }
         plot(function(x) dnorm(x),  
             main = paste0("Standard Normal Distribution"), 
-            xlim=xrange, xlab="", ylab="Density")
+            xlim=xrange, xlab="Z values", ylab="Density")
         abline(v = obsZStat, col="red")
     }
 )
@@ -22,7 +22,7 @@ setMethod("npGSEAPlot", "npGSEAResultBeta",
         plot(function(x) dbeta(x, alph, bet), 
                 main = paste0("Beta distribution with \n alpha = ", 
                     round(alph, 2), " and beta = ", round(bet,2)), 
-                xlim = xrange, xlab = "", ylab = "Density")
+                xlim = xrange, xlab = "Beta values", ylab = "Density")
         abline(v = obsBStat, col="red")
     }
 )
@@ -34,7 +34,7 @@ setMethod("npGSEAPlot", "npGSEAResultChiSq",
         if(obsStat >= 4) {xrange <- c(0, (obsStat+1) ) }
         plot(function(x) dchisq(x, df),  
             main = paste0("Chi-sq distribution with \n df=", 
-                round(df, 2)), xlim=xrange, xlab="", ylab="Density")
+                round(df, 2)), xlim=xrange, xlab="Chi-sq values", ylab="Density")
         abline(v = obsStat, col="red")
     }
 )

@@ -2,7 +2,7 @@
 \alias{npGSEA}
 \title{Calculates an approximation of the permutation GSEA statistics and p-values}
 \usage{
-  npGSEA(x, y, set, z = NULL, approx = c("norm", "beta", "chiSq"), w = NULL)
+  npGSEA(x, y, set, covars = NULL, approx = c("norm", "beta", "chiSq"), w = NULL)
 }
 \arguments{
   \item{x}{A matrix of expression data or an object of type ExpressionSet.  
@@ -13,7 +13,7 @@
   \item{y}{A vector containing the treatment for each sample. 
       The length of y must be more than 4 for the "chisq" approximation.}
   
-  \item{z}{A vector or matrix containing covariate(s) of interest, optional}
+  \item{covars}{A vector or matrix containing covariate(s) of interest, optional}
   
   \item{set}{A \code{GeneSet} object containing a set of genes of interest or a 
   	\code{GeneSetCollection} object containing a collection of GeneSets}

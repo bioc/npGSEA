@@ -47,6 +47,13 @@ setMethod("xSet", "npGSEAResultBetaCollection",
     function(object){lapply(object, function(y) y@xSet)}
 )
 
+setMethod("betaHats", "npGSEAResultBeta", 
+    function(object){object@betaHats}
+)
+setMethod("betaHats", "npGSEAResultBetaCollection", 
+    function(object){lapply(object, function(y) y@betaHats)}
+)
+
 setMethod("betaStat", "npGSEAResultBeta", 
     function(object){object@betaStat}
 )

@@ -183,6 +183,7 @@ sigmaSq(res3)
 zStat(res3)
 pTwoSided(res3)
 pLeft(res3)
+pValues(res3)
 dim(xSet(res3))
 @
 
@@ -210,11 +211,13 @@ npGSEAPlot(res3)
 There are three types of approximation methods in \verb@npGSEA@: 
 "norm", "beta", and "chiSq".
 Each method is discussed in brief in Section 3.  The "norm" 
-approximation method is the default. 
+approximation method is the default. Note that each of these 
+methods has the same $\hat\beta_{g}$ (see methods section).
 
 <<runItNorm, fig = TRUE>>=
 res5_norm <- npGSEA(ALL, yFactor, set5, approx= "norm")  
 res5_norm
+betaHats(res5_norm)
 npGSEAPlot(res5_norm)
 @
 
@@ -224,6 +227,7 @@ The beta approximation yields results quite similar to the normal approximation.
 <<runItBeta, fig = TRUE>>=
 res5_beta <- npGSEA(ALL, yFactor, set5, approx= "beta")
 res5_beta
+betaHats(res5_beta)
 npGSEAPlot(res5_beta)
 @
 
@@ -236,6 +240,7 @@ in Section 3.2.
 <<runItChiSq, fig = TRUE>>=
 res5_chiSq <- npGSEA(ALL, yFactor, set5, approx= "chiSq")  
 res5_chiSq
+betaHats(res5_chiSq)
 chiSqStat(res5_chiSq)
 stat(res5_chiSq)
 stat(res5_chiSq)/sigmaSq(res5_chiSq)
@@ -268,18 +273,20 @@ We want to assign a larger
 weight to genes that are of 
 a particular interest, and a lower weight to genes that we know may 
 behave poorly.  In this example, we
-up-weight the genes in \verb@set7@ that had a positive fold change, 
-and down-weight those with a 
-negative fold change.  We assign the first 10 genes in our set a weight 
-of 2, and the second 10 a weight of 0.5.
+weight the genes in \verb@set7@ by their variance.
 
-<<runItChiSq>>=
-w <- c( rep(2, 10), rep (0.5, 10) )
+<<runItwts>>=
 res7_nowts <- npGSEA(x = ALL, y= yFactor, set = set7)  
 res7_nowts
-res7_wts <- npGSEA(x = ALL, y = yFactor, set = set7,  w = w)  
-res7_wts
+
+wts <- apply(exprs(ALL)[match(geneIds(set7), featureNames(ALL)), ], 
+						1, var)	
+wts <- 1/wts				
+res7_wts <- npGSEA(x = ALL, y = yFactor, set = set7,  w = wts, approx= "norm")  
+res7_wts						
 @
+
+
 
 By adding these weights, we get a slightly more significant result.  
 We can add weights for the beta and 
@@ -290,16 +297,22 @@ a weight of 1 for all genes.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Adding covariates to model}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-Often we want to correct for confounders in our model.  In this 
+Often we want to correct for confounders in our model.  To do this with 
+\verb@npGSEA@, we provide a vector or matrix in the \verb@covars@ 
+slot of our function.  \verb@npGSEA@ then projects both the data (\verb@x@) 
+and the outcome of interest (\verb@y@) against our covariate matrix/vector.  
+The resulting residuals are used for further analysis.
+
+In this 
 example, we correct for the age and sex of the subjects in our experiment. 
 For more details on model selection and its relation to inference, 
 please see the \verb@limma@ manual.  
 
 <<addCovariates>>=
-res3_age <- npGSEA(x = ALL, y = yFactor, set = set3, z = ALL$age) 
+res3_age <- npGSEA(x = ALL, y = yFactor, set = set3, covars = ALL$age) 
 res3_age
 
-res3_agesex <- npGSEA(x = ALL, y = yFactor, set = set3, z = cbind(ALL$age, ALL$sex)) 
+res3_agesex <- npGSEA(x = ALL, y = yFactor, set = set3, covars = cbind(ALL$age, ALL$sex)) 
 res3_agesex
 @
 

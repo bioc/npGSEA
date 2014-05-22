@@ -34,10 +34,10 @@ This method is applicable for all three approximation methods.
     \item{\code{signature(object = "npGSEAResultChiSq")}}{Returns the centered and 
     scaled X matrix used for analysis to create a \code{npGSEAResultChiSq} object}
     \item{\code{signature(object = "npGSEAResultNormCollection")}}{Returns a list of 
-    centered and scaled X matriced used for analysis to create the 
+    centered and scaled X matrices used for analysis to create the 
     \code{npGSEAResultNormCollection} objects (1 for each set)}    
     \item{\code{signature(object = "npGSEAResultBetaCollection")}}{Returns a list of 
-    centered and scaled X matriced used for analysis to create the 
+    centered and scaled X matrices used for analysis to create the 
     \code{npGSEAResultBetaCollection} objects (1 for each set)}    
     \item{\code{signature(object = "npGSEAResultChiSqCollection")}}{Returns a list of 
     centered and scaled X matrices used for analysis to create the 

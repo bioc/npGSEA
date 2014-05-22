@@ -7,6 +7,7 @@
     xg <- .center(xset)
 
     ##adjust for covariates for each gene and sample, if necessary
+    ##z is our covars
    if(is.null(z) == FALSE ){
         gnames <- rownames(xg)
         xg <- t(apply(xg, 1, .getResids, z))

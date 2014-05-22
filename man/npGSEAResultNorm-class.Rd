@@ -20,6 +20,7 @@ Objects can be created by calls of \code{npGSEA}.
         \item{\code{pRight}:}{Object of class \code{"numeric"}, the p-value for the right-side hypothesis }
         \item{\code{pTwoSided}:}{Object of class \code{"numeric"}, the p-value for the two-sided hypothesis }
         \item{\code{xSet}:}{Object of class \code{"matrix"}, the centered and scaled x data for this set}
+        \item{\code{betaHats}:}{Object of class \code{"vector"}, the betaHats for each gene in this set}
     }
 }
 \author{
