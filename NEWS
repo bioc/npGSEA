@@ -1,3 +1,9 @@
+CHANGES IN VERSION 1.3.1 (October 19 2014)
+------------------------
+
+    o Added a requirement that each treatment group have at least two observations.
+    o Set a minimum p-value for the Beta approximation so that it never returns a value of zero
+
 CHANGES IN VERSION 1.1.2 (May 22 2014)
 ------------------------
 

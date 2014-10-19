@@ -17,5 +17,5 @@ setMethod("pValues", "npGSEAResultBeta",
 setMethod("pValues", "npGSEAResultChiSq",
     function(object) {
         cat (paste0("pTwoSided = ",  signif(object@pTwoSided,3), "\n") )
-    }
+        }
 )

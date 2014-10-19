@@ -3,7 +3,7 @@
 ##' This function calculates the permutation gene set enrichment analysis test statistic and p-value without actually running the permutation.  We account for the covariance among the genes within the set and approximate the corresponding permutation distribution.  For more details on the method see Larson and Owen (2014).
 ##' @title Runs the non-permutation GSEA 
 ##' @param x A matrix of expression data or an object of type ExpressionSet.  The columns of x represent samples in a given experiment.  The rows are genes.  The names of each row (or featureNames of the eSet) must be of the same type (e.g., entrez ids) as the ids of the gene set.
-##' @param y A vector containing the treatment for each sample. The length of y must be more than 4 for the "chisq" approximation.
+##' @param y A vector containing the treatment for each sample. The length of y must be more than 4 for the "chisq" approximation.  Each treatment group must have at least two observations for all approximation methods.
 ##' @param covars A vector or matrix containing covariate(s) of interest, optional
 ##' @param set A GeneSet object containing a set of genes of interest or a GeneSetCollection object containing a collection of GeneSets
 ##' @param approx A string of either "norm" (default), "beta" or "chiSq".  If "norm", the normal approximation to the non-permutation GSEA is calculated and returned.  If "beta", the beta approximation is reported.  If "chiSq", the Chi-squared approximation to the permutation GSEA is calculated.

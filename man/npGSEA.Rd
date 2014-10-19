@@ -11,7 +11,9 @@
       must be of the same type (e.g., entrez ids) as the ids of the gene set.}
 
   \item{y}{A vector containing the treatment for each sample. 
-      The length of y must be more than 4 for the "chisq" approximation.}
+      The length of y must be more than 4 for the "chisq" approximation.  
+      Each treatment group must have at least two observations for all approximation methods.  
+      There can only be two treatment groups.}
   
   \item{covars}{A vector or matrix containing covariate(s) of interest, optional}
   

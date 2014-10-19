@@ -54,7 +54,23 @@
 
 
 ##want sum(y)=0
-.adjustY<-function(y) {
+##and want to make sure that there are at least two obs in each level of y
+.adjustY <- function(y) {
+    yFactor = as.factor(y)
+    yLevels = levels(yFactor)
+    numLevels=length(yLevels)
+    if (numLevels!=2){
+    	stop( "You need two (and only two) treatment groups for y") 
+    }
+    for (l in 1:numLevels){
+    	locLevel = which(yFactor==yLevels[l])
+    	if (length(locLevel)<2){
+    		stop( paste0("Fewer than two observations in group ", yLevels[l], 
+            " are in this experiment.  Make sure that there are at least two 
+            observations in each treatment group.") ) 
+    	}
+    }
+       
     y <- as.numeric(y)
     ynew <- y-mean(y)
     return(as.numeric(ynew))

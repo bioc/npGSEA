@@ -60,6 +60,13 @@ runBetaApprox <- function(xg, y, wg, set){
 
     ##next we calculate A and B, see section 3.3
     nobs <- length(y)
+    yFactor <- as.factor(y)
+    yLevels <- levels(yFactor)
+ 	locLevel1 <- which(yFactor==yLevels[1])
+   	n1<- length(locLevel1)
+   	locLevel2 <- which(yFactor==yLevels[2])
+   	n2 <- length(locLevel2)
+     
     XGi <- wg %*% xg 
     sortedXGi <- sort(XGi)
     sortedY <- sort(y)
@@ -71,7 +78,7 @@ runBetaApprox <- function(xg, y, wg, set){
     alpha <- (A/(B-A))*(A*B/varThatGw+1)
     beta <- (-B/(B-A))*(A*B/varThatGw+1)
     betaStat <- (ThatGw-A)/(B-A)
-    pvals <- .calcPvaluesBeta (betaStat, alpha, beta)
+    pvals <- .calcPvaluesBeta (betaStat, alpha, beta, n1, n2)
     
     return(new("npGSEAResultBeta",
         geneSetName = setName(set),
@@ -88,11 +95,17 @@ runBetaApprox <- function(xg, y, wg, set){
 }
 
 ##calculates p-values for our appoximation (beta)
-.calcPvaluesBeta <- function(betaStat, alpha, beta){
+.calcPvaluesBeta <- function(betaStat, alpha, beta, n1, n2){
+	epsilon <- 1/choose((n1+n2), n1)
+	
 	pL <- pbeta(betaStat, alpha, beta)
+	pLeft <- epsilon + (1-2*epsilon)*pL
+	
     pR <- pbeta(betaStat, alpha, beta, lower.tail=FALSE)
-    pC <- 2*min(pL, pR)
-    return(list(pLeft=pL, pRight=pR, pTwoSided=pC))
+    pRight <- epsilon + (1-2*epsilon)*pR
+    
+    pC <- 2*min(pLeft, pRight)
+    return(list(pLeft=pLeft, pRight=pRight, pTwoSided=pC) )
 }
 
 
