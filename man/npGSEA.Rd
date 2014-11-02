@@ -2,7 +2,7 @@
 \alias{npGSEA}
 \title{Calculates an approximation of the permutation GSEA statistics and p-values}
 \usage{
-  npGSEA(x, y, set, covars = NULL, approx = c("norm", "beta", "chiSq"), w = NULL)
+  npGSEA(x, y, set, covars = NULL, approx = c("norm", "beta", "chiSq"), w = NULL, epsilonBetaAdj=TRUE )
 }
 \arguments{
   \item{x}{A matrix of expression data or an object of type ExpressionSet.  
@@ -27,6 +27,9 @@
 
   \item{w}{A vector or list containing the weights of each gene in the set or sets, optional.  If w is a list, 
   	the number of elements in the list must correspond to the number of gene sets in the collection.}
+  	
+  	  \item{epsilonBetaAdj}{A boolean indicating whether or to not to use an epsilon adjusted p-value for the Beta approximation.  
+  	  	This prevents observed p-values of 0.  The default is TRUE.}
 }
 \value{
 An object with the corresponding GSEA results.  If approx="norm" an \code{npGSEAResultNorm} 

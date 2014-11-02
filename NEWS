@@ -1,3 +1,8 @@
+CHANGES IN VERSION 1.3.2 (November 2 2014)
+------------------------
+
+   o Set a minimum p-value for the Beta approximation as the default, but allowed it be changed with the 'epsilonBetaAdj' parameter in the main function.  
+
 CHANGES IN VERSION 1.3.1 (October 19 2014)
 ------------------------
 

@@ -52,7 +52,7 @@ runNormApprox <- function(xg, y, wg, set){
 
 ### calc Beta dist'n based stats
 ##uses many of the same functions as norm approx
-runBetaApprox <- function(xg, y, wg, set){    
+runBetaApprox <- function(xg, y, wg, set, epAdj){    
     #first we get betahats, That and its variance
     betahatG <- .calcBetaHatG (xg, y)
     ThatGw <- .calcThatGw (betahatG, wg)
@@ -60,13 +60,6 @@ runBetaApprox <- function(xg, y, wg, set){
 
     ##next we calculate A and B, see section 3.3
     nobs <- length(y)
-    yFactor <- as.factor(y)
-    yLevels <- levels(yFactor)
- 	locLevel1 <- which(yFactor==yLevels[1])
-   	n1<- length(locLevel1)
-   	locLevel2 <- which(yFactor==yLevels[2])
-   	n2 <- length(locLevel2)
-     
     XGi <- wg %*% xg 
     sortedXGi <- sort(XGi)
     sortedY <- sort(y)
@@ -78,7 +71,7 @@ runBetaApprox <- function(xg, y, wg, set){
     alpha <- (A/(B-A))*(A*B/varThatGw+1)
     beta <- (-B/(B-A))*(A*B/varThatGw+1)
     betaStat <- (ThatGw-A)/(B-A)
-    pvals <- .calcPvaluesBeta (betaStat, alpha, beta, n1, n2)
+    pvals <- .calcPvaluesBeta (betaStat, alpha, beta, y, epAdj)
     
     return(new("npGSEAResultBeta",
         geneSetName = setName(set),
@@ -95,8 +88,23 @@ runBetaApprox <- function(xg, y, wg, set){
 }
 
 ##calculates p-values for our appoximation (beta)
-.calcPvaluesBeta <- function(betaStat, alpha, beta, n1, n2){
-	epsilon <- 1/choose((n1+n2), n1)
+##with the epsilon min p-value based on the number of levels of y
+.calcPvaluesBeta <- function(betaStat, alpha, beta, y, epAdj){
+	epsilon <- 0
+	
+	if (epAdj==TRUE){
+		yFactor <- as.factor(y)
+    	yLevels <- levels(yFactor)
+   	 	numLevels <- length(yLevels)
+    	n <- length(y)
+    	epsilon <- 1
+    	for (j in 1:numLevels){
+    		locLevel <- which(yFactor==yLevels[j])
+    		nj <- length(locLevel)
+    		epsilon <- epsilon*factorial(nj)
+    	}
+    	epsilon <- epsilon/factorial(n)
+	}
 	
 	pL <- pbeta(betaStat, alpha, beta)
 	pLeft <- epsilon + (1-2*epsilon)*pL

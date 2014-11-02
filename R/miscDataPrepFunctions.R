@@ -59,9 +59,9 @@
     yFactor = as.factor(y)
     yLevels = levels(yFactor)
     numLevels=length(yLevels)
-    if (numLevels!=2){
-    	stop( "You need two (and only two) treatment groups for y") 
-    }
+    #if (numLevels!=2){
+    #	stop( "You need two (and only two) treatment groups for y") 
+    #}
     for (l in 1:numLevels){
     	locLevel = which(yFactor==yLevels[l])
     	if (length(locLevel)<2){
