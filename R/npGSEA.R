@@ -8,11 +8,11 @@
 ##' @param set A GeneSet object containing a set of genes of interest or a GeneSetCollection object containing a collection of GeneSets
 ##' @param approx A string of either "norm" (default), "beta" or "chiSq".  If "norm", the normal approximation to the non-permutation GSEA is calculated and returned.  If "beta", the beta approximation is reported.  If "chiSq", the Chi-squared approximation to the permutation GSEA is calculated.
 ##' @param w A vector or list containing the weights of each gene in the set or sets, optional.  If w is a list, the number of elements in the list must correspond to the number of gene sets in the collection. 
-##' @param epsilonBetaAdj A boolean indicating whether or to not to use an epsilon adjusted p-value for the Beta approximation.  This prevents observed p-values of 0.  The default is TRUE.
+##' @param epsilonBetaAdj A boolean indicating whether or to not to use an epsilon adjusted p-value for the Beta approximation.  When TRUE, this prevents observed p-values of 0.  The default is FALSE.
 ##' @return an object with the corresponding GSEA results.  If approx="norm" an npGSEAResultNorm object is returned.  If approx="beta" a npGSEAResultBeta object is returned.  If approx="chiSq" a npGSEAResultChiSq object is returned.  If set is a GeneSetCollection (i.e., multiple sets of interest), then the corresponding npGSEAResultNormCollection, npGSEAResultBetaCollection, or npGSEAResultChiSqCollection is returned.
 ##' @author Jessica L. Larson and Art Owen
 ##' @export
-npGSEA <- function(x, y, set, covars = NULL, approx = c("norm", "beta", "chiSq"), w = NULL, epsilonBetaAdj=TRUE){
+npGSEA <- function(x, y, set, covars = NULL, approx = c("norm", "beta", "chiSq"), w = NULL, epsilonBetaAdj=FALSE){
     approx <- match.arg(approx, c("norm", "beta", "chiSq"), several.ok = FALSE)    
     if(is(x)[1]== "ExpressionSet") { x <- exprs(x) }
     if(dim(x) [2] != length(y) )
