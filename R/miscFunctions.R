@@ -135,6 +135,14 @@ runChisqApprox <- function(xg, y, wg, set){
     df <- as.numeric(2*chiSqMoments$mu^2/chiSqMoments$var)
     sigsq <- as.numeric(chiSqMoments$mu/df)
     pQ <- as.numeric(1 - pchisq(ChatGw/sigsq, df) )
+   
+	##check moments and NaN's
+	if (is.nan(pQ)==TRUE){
+		print(paste0("The moments for the chisquare approximation (mu= ", chiSqMoments$mu , " and var = ",
+		chiSqMoments$var, "), which did not lead to a valid approximation.  This may be a result of a small sample size at one or more levels 
+		of the predictor or response variable"))
+	}
+    
     return(new("npGSEAResultChiSq",
         geneSetName = setName(set),
         chiSqStat = ChatGw/sigsq,

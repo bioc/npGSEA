@@ -5,6 +5,8 @@
     xset <- x[which(inset==1),]  ##rows are genes
     ##scale x to sum to zero
     xg <- .center(xset)
+    
+    .checkxg(xg)
 
     ##adjust for covariates for each gene and sample, if necessary
     ##z is our covars
@@ -16,6 +18,29 @@
     }   
     return(list(xg=xg, y=y, inset=inset))
 }
+
+##check xg so that there is an error if 
+##X_G takes only one value, 
+##or if X_G takes only two values but one or both of those values appears only 1 time
+.checkxg <- function(x){
+	XGi <- apply(x, 2, sum)  ##sum the col'ns
+	uniqueXG <- unique(XGi)	
+    numVals = length(uniqueXG)
+    if (numVals == 1){
+    	stop( "You need at least two different values (across all samples) for the sum of the Xg's (for all g in G).") 
+    }
+    if (numVals == 2){
+    	locVal1 = which(XGi==uniqueXG[1])
+    	if (length(locVal1)==1){
+    		stop( "If the sum of the Xg's (for all g in G) takes only two distinct values, then one of these values needs to appear more than once.")
+    	}
+    	locVal2 = which(XGi==uniqueXG[2])
+    	if (length(locVal2)==1){
+    		stop( "If the sum of the Xg's (for all g in G) takes only two distinct values, then one of these values needs to appear more than once.")
+    	}
+    }
+}
+
 
 ##take into account any weights, or assign them all to 1, if none given
 .prepW <- function(w, set, inset){
@@ -56,21 +81,20 @@
 ##want sum(y)=0
 ##and want to make sure that there are at least two obs in each level of y
 .adjustY <- function(y) {
-    yFactor = as.factor(y)
+	yFactor = as.factor(y)
     yLevels = levels(yFactor)
     numLevels=length(yLevels)
-    #if (numLevels!=2){
-    #	stop( "You need two (and only two) treatment groups for y") 
-    #}
-    for (l in 1:numLevels){
-    	locLevel = which(yFactor==yLevels[l])
-    	if (length(locLevel)<2){
-    		stop( paste0("Fewer than two observations in group ", yLevels[l], 
+    if (numLevels < 3){
+   	 	for (l in 1:numLevels){
+    		locLevel = which(yFactor==yLevels[l])
+    		if (length(locLevel)<2){
+    			stop( paste0("Fewer than two observations in group ", yLevels[l], 
             " are in this experiment.  Make sure that there are at least two 
-            observations in each treatment group.") ) 
+            observations in each treatment group if you only have two treatment groups.") ) 
+    		}
     	}
-    }
-       
+	}
+          
     y <- as.numeric(y)
     ynew <- y-mean(y)
     return(as.numeric(ynew))
