@@ -1,3 +1,8 @@
+CHANGES IN VERSION 1.3.5 (December 14 2014)
+------------------------
+
+   o Set a minimum p-value for the Beta approximation as the default 
+
 CHANGES IN VERSION 1.3.4 (November 9 2014)
 ------------------------
 
