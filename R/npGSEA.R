@@ -9,17 +9,18 @@
 ##' @param approx A string of either "norm" (default), "beta" or "chiSq".  If "norm", the normal approximation to the non-permutation GSEA is calculated and returned.  If "beta", the beta approximation is reported.  If "chiSq", the Chi-squared approximation to the permutation GSEA is calculated.
 ##' @param w A vector or list containing the weights of each gene in the set or sets, optional.  If w is a list, the number of elements in the list must correspond to the number of gene sets in the collection. 
 ##' @param epsilonBetaAdj A boolean indicating whether or to not to use an epsilon adjusted p-value for the Beta approximation.  When TRUE, this prevents observed p-values of 0.  The default is TRUE.
+##' @param scaleXY A boolean indicating whether or to not to scale x and y.  The default is TRUE.
 ##' @return an object with the corresponding GSEA results.  If approx="norm" an npGSEAResultNorm object is returned.  If approx="beta" a npGSEAResultBeta object is returned.  If approx="chiSq" a npGSEAResultChiSq object is returned.  If set is a GeneSetCollection (i.e., multiple sets of interest), then the corresponding npGSEAResultNormCollection, npGSEAResultBetaCollection, or npGSEAResultChiSqCollection is returned.
 ##' @author Jessica L. Larson and Art Owen
 ##' @export
-npGSEA <- function(x, y, set, covars = NULL, approx = c("norm", "beta", "chiSq"), w = NULL, epsilonBetaAdj=TRUE){
+npGSEA <- function(x, y, set, covars = NULL, approx = c("norm", "beta", "chiSq"), w = NULL, epsilonBetaAdj=TRUE, scaleXY=TRUE){
     approx <- match.arg(approx, c("norm", "beta", "chiSq"), several.ok = FALSE)    
     if(is(x)[1]== "ExpressionSet") { x <- exprs(x) }
     if(dim(x) [2] != length(y) )
         {stop("Must have the same amount of samples in x and y") }
         
     ##scale y to sum to zero
-    y <- .adjustY(y)
+    if(scaleXY==TRUE) { y <- .adjustY(y)}
       
     ######collection of sets:
     if (is(set, "GeneSetCollection") == TRUE ){
@@ -41,7 +42,7 @@ npGSEA <- function(x, y, set, covars = NULL, approx = c("norm", "beta", "chiSq")
         if (approx=="norm"){
             res <- mapply(function(singleSet, singleW){
             ##prep data
-            xyz <- .prepXYZ(x, y,  covars, singleSet)
+            xyz <- .prepXYZ(x, y,  covars, singleSet, scaleXY)
             xg <- xyz$xg
             y <- xyz$y
             wg <- .prepW(singleW, singleSet,  xyz$inset)
@@ -53,7 +54,7 @@ npGSEA <- function(x, y, set, covars = NULL, approx = c("norm", "beta", "chiSq")
         ##beta approx
         if (approx=="beta"){              
             res <- mapply(function(singleSet, singleW){
-            xyz <- .prepXYZ(x, y,  covars, singleSet)
+            xyz <- .prepXYZ(x, y,  covars, singleSet, scaleXY)
             xg <- xyz$xg
             y <- xyz$y
             wg <- .prepW(singleW, singleSet,  xyz$inset)
@@ -64,7 +65,7 @@ npGSEA <- function(x, y, set, covars = NULL, approx = c("norm", "beta", "chiSq")
         ##chisq approx
         if (approx=="chiSq"){
             res <- mapply(function(singleSet, singleW){
-            xyz <- .prepXYZ(x, y, covars, singleSet)
+            xyz <- .prepXYZ(x, y, covars, singleSet, scaleXY)
             xg <- xyz$xg
             y <- xyz$y
             wg <- .prepW(singleW, singleSet, xyz$inset)
@@ -77,7 +78,7 @@ npGSEA <- function(x, y, set, covars = NULL, approx = c("norm", "beta", "chiSq")
     #########single gene sets:
     else if (is(set, "GeneSet") ==TRUE ) {
         ##prep data
-        xyz <- .prepXYZ(x, y,  covars, set)
+        xyz <- .prepXYZ(x, y,  covars, set, scaleXY)
         xg <- xyz$xg
         y <- xyz$y
         wg <- .prepW(w, set, xyz$inset)

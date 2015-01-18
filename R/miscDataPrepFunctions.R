@@ -1,10 +1,11 @@
-.prepXYZ <- function(x, y,  z=NULL, set) {
+.prepXYZ <- function(x, y,  z=NULL, set, scaleXY=TRUE) {
     ##get locale of set genes in experiment
     inset <- .locGenes(x, set)
     ##select out genes in set
     xset <- x[which(inset==1),]  ##rows are genes
     ##scale x to sum to zero
-    xg <- .center(xset)
+    xg <- xset
+    if(scaleXY==TRUE) {xg <- .center(xset)}
     
     .checkxg(xg)
 

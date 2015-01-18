@@ -1,3 +1,8 @@
+CHANGES IN VERSION 1.3.6 (Jan 18 2015)
+------------------------
+
+   o Scaling of X and Y is now optional (and is the current default) 
+
 CHANGES IN VERSION 1.3.5 (December 14 2014)
 ------------------------
 
