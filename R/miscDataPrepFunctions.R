@@ -1,11 +1,17 @@
-.prepXYZ <- function(x, y,  z=NULL, set, scaleXY=TRUE) {
+.prepXYZ <- function(x, y,  z=NULL, set, scaleXY=TRUE, uniVarX=TRUE) {
     ##get locale of set genes in experiment
     inset <- .locGenes(x, set)
     ##select out genes in set
     xset <- x[which(inset==1),]  ##rows are genes
     ##scale x to sum to zero
     xg <- xset
+    ##center at 0
     if(scaleXY==TRUE) {xg <- .center(xset)}
+    ##unit variance for X
+    if(uniVarX==TRUE) {  
+    	sdx <- sd(xg, na.rm=TRUE)
+    	xg <- xg/sdx
+    }
     
     .checkxg(xg)
 

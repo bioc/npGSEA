@@ -2,7 +2,7 @@
 \alias{npGSEA}
 \title{Calculates an approximation of the permutation GSEA statistics and p-values}
 \usage{
-  npGSEA(x, y, set, covars = NULL, approx = c("norm", "beta", "chiSq"), w = NULL, epsilonBetaAdj=TRUE, scaleXY=TRUE )
+  npGSEA(x, y, set, covars = NULL, approx = c("norm", "beta", "chiSq"), w = NULL, epsilonBetaAdj=TRUE, scaleXY=TRUE, uniVarX=TRUE )
 }
 \arguments{
   \item{x}{A matrix of expression data or an object of type ExpressionSet.  
@@ -32,6 +32,7 @@
   	  	When TRUE, this prevents observed p-values of 0.  The default is TRUE.}
   	  	
   	   \item{scaleXY}{A boolean indicating whether or to not to scale x and y.  The default is TRUE.}
+  	   \item{uniVarX}{A boolean indicating whether or to not to scale x to have unit variance. The default is TRUE.}
 }
 \value{
 An object with the corresponding GSEA results.  If approx="norm" an \code{npGSEAResultNorm} 
