@@ -138,7 +138,7 @@ runChisqApprox <- function(xg, y, wg, set){
    
 	##check moments and NaN's
 	if (is.nan(pQ)==TRUE){
-		print(paste0("The moments for the chisquare approximation (mu= ", chiSqMoments$mu , " and var = ",
+		print(paste0("The moments for the chisquare approximation (mu= ", chiSqMoments$mu , " and var = ",
 		chiSqMoments$var, "), which did not lead to a valid approximation.  This may be a result of a small sample size at one or more levels 
 		of the predictor or response variable"))
 	}
