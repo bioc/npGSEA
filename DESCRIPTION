@@ -3,9 +3,9 @@ Type: Package
 Title: Permutation approximation methods for gene set enrichment
         analysis (non-permutation GSEA)
 Version: 1.3.8
-Date: 2015-2-4
+Date: 2015-3-27
 Author: Jessica Larson and Art Owen
-Maintainer: Jessica Larson <larson.jessica@gene.com>
+Maintainer: Jessica Larson <larson.jess@gmail.com>
 Imports: Biobase, methods, BiocGenerics, graphics, stats
 Suggests: ALL, genefilter, limma, hgu95av2.db, ReportingTools,
         BiocStyle
