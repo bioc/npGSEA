@@ -34,3 +34,6 @@ Jessica L. Larson
 showClass("npGSEAResultNorm")
 }
 \keyword{classes}
+\references{
+Jessica L Larson and Art B Owen: Moment based gene set tests. BMC Bioinformatics 2015, 16:132. \url{http://www.biomedcentral.com/1471-2105/16/132}
+}

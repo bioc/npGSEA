@@ -59,7 +59,7 @@ $p$-values that closely approximate the permutation method $p$-values.
 
 This vignette describes a typical analysis workflow and includes some information 
 about the statistical theory behind \verb@npGSEA@.  For more technical 
-details, please see Larson and Owen, 2014 \nocite{larson:2014}.
+details, please see Larson and Owen, 2015 \nocite{larson:2015}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Example workflow for GSEA}
@@ -394,7 +394,7 @@ permutation-based GSEA methods.  The methods we present in
 in brief below are not as computationally 
 expensive, random, or granular than their permutation counterparts.  
 More details on our method can 
-be found in Larson and Owen (2014).
+be found in Larson and Owen (2015).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Test statistics}
@@ -464,7 +464,7 @@ to $E(C_{G,w})$ and $E( C_{G,w}^2)$ under permutation, respectively.
 
 Additional details on how $\sigma^2$, $A$, $B$, $\alpha$, $\beta$, $E(C_{G,w})$, $E( C_{G,w}^2)$, and 
 $\nu$ 
-are derived can be found in Larson and Owen (2014).
+are derived can be found in Larson and Owen (2015).
 
 
 
@@ -482,7 +482,6 @@ options(prompt="> ", continue="+ ")
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{References}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-Larson and Owen.  (2014).  Moment based gene set tests.  Submitted.
-
+Larson and Owen.  (2015).  Moment based gene set tests.  \emph{BMC Bioinformatics.}  \textbf{16}:132. \url{http://www.biomedcentral.com/1471-2105/16/132}
 
 \end{document}

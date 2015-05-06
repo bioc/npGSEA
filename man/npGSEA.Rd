@@ -58,3 +58,6 @@ sets of interest), then the corresponding \code{npGSEAResultNormCollection},
     geneSetABC15 <- GeneSet(geneIds=letters[1:15], setName="setABC15")
     res <- npGSEA(x = xData, y = yFactor, set = geneSetABC15)
 }
+\references{
+Jessica L Larson and Art B Owen: Moment based gene set tests. BMC Bioinformatics 2015, 16:132. \url{http://www.biomedcentral.com/1471-2105/16/132}
+}
