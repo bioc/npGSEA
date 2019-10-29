@@ -2,7 +2,7 @@ Package: npGSEA
 Type: Package
 Title: Permutation approximation methods for gene set enrichment
         analysis (non-permutation GSEA)
-Version: 1.21.0
+Version: 1.22.0
 Date: 2015-5-6
 Author: Jessica Larson and Art Owen
 Maintainer: Jessica Larson <larson.jess@gmail.com>
